@@ -77,7 +77,7 @@ export default function QRApp() {
         .then(() => html5QrCode.clear())
         .catch((err) => console.error("Failed to stop scanner", err));
     };
-  }, []);
+  }, [scanned]);
 
   const downloadQR = () => {
     if (!qrUrl) return;
@@ -88,6 +88,7 @@ export default function QRApp() {
   };
   const reset = () => {
     setScanned("")
+    startScanner();
   }
 
   return (
@@ -170,7 +171,7 @@ export default function QRApp() {
               </div>
               <div>
                 <button
-                  onClick={() => { reset(); startScanner();}}
+                  onClick={() => { reset(); }}
                   className="bg-red-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition"
                 >
                   Reset Cam
