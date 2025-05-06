@@ -77,7 +77,7 @@ export default function QRApp() {
         .then(() => html5QrCode.clear())
         .catch((err) => console.error("Failed to stop scanner", err));
     };
-  }, [scanned]);
+  }, []);
 
   const downloadQR = () => {
     if (!qrUrl) return;
