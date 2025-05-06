@@ -11,6 +11,7 @@ export default function QRApp() {
   const [qrUrl, setQrUrl] = useState("");
   const [scanned, setScanned] = useState("");
   const qrImgRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const tabs = ["text", "url", "sms", "email", "phone"];
 
@@ -42,42 +43,6 @@ export default function QRApp() {
     };
     generate();
   }, [input1, input2, tab]);
-  useEffect(() => {
-    const html5QrCode = new Html5Qrcode("scanner");
-
-    const startScanner = async () => {
-      try {
-        const cameras = await Html5Qrcode.getCameras();
-        if (cameras && cameras.length) {
-          await html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
-            (decodedText) => {
-              setScanned(decodedText);
-              html5QrCode.stop().then(() => html5QrCode.clear());
-            },
-            (errorMessage) => {
-              console.warn("QR Code scan error:", errorMessage);
-            }
-          );
-        } else {
-          alert("No camera found.");
-        }
-      } catch (err) {
-        console.error("Camera access error", err);
-        alert("Failed to access camera: " + err.message);
-      }
-    };
-
-    startScanner();
-
-    return () => {
-      html5QrCode
-        .stop()
-        .then(() => html5QrCode.clear())
-        .catch((err) => console.error("Failed to stop scanner", err));
-    };
-  }, []);
 
   const downloadQR = () => {
     if (!qrUrl) return;
@@ -86,10 +51,31 @@ export default function QRApp() {
     link.download = "qrcode.png";
     link.click();
   };
-  const reset = () => {
-    setScanned("")
-    startScanner();
-  }
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    const scanner = new Html5Qrcode("scanner-box");
+    try {
+      const result = await scanner.scanFile(file, true);
+      setScanned(result);
+    } catch (err) {
+      console.error("Scan failed", err);
+      alert("Failed to scan QR code from image.");
+    } finally {
+      scanner.clear();
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files.length > 0) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
@@ -158,26 +144,36 @@ export default function QRApp() {
 
         <hr className="border-gray-600" />
 
-        {/* Scanner */}
+        {/* Image Upload Scanner */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-center text-teal-300">
-            Scan QR Code
+            Upload QR Code Image to Scan
           </h2>
-          <div id="scanner" className="mx-auto w-full max-w-xs" />
+
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            className="w-full h-40 flex items-center justify-center border-2 border-dashed border-gray-600 rounded-md cursor-pointer bg-gray-700 hover:border-teal-400 transition"
+            onClick={() => fileInputRef.current.click()}
+          >
+            <span className="text-gray-300">
+              Drag & drop or click to upload
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={(e) => handleFile(e.target.files[0])}
+              className="hidden"
+            />
+          </div>
+
+          <div id="scanner-box" className="hidden" />
+
           {scanned && (
-            <>
-              <div className="text-green-300 bg-green-900 p-2 rounded text-center">
-                ✅ Scanned: {scanned}
-              </div>
-              <div>
-                <button
-                  onClick={() => { reset(); }}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition"
-                >
-                  Reset Cam
-                </button>
-              </div>
-            </>
+            <div className="text-green-300 bg-green-900 p-2 rounded text-center">
+              ✅ Scanned: {scanned}
+            </div>
           )}
         </div>
       </div>
