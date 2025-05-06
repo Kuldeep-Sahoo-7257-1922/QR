@@ -42,43 +42,42 @@ export default function QRApp() {
     };
     generate();
   }, [input1, input2, tab]);
-useEffect(() => {
-  const html5QrCode = new Html5Qrcode("scanner");
+  useEffect(() => {
+    const html5QrCode = new Html5Qrcode("scanner");
 
-  const startScanner = async () => {
-    try {
-      const cameras = await Html5Qrcode.getCameras();
-      if (cameras && cameras.length) {
-        await html5QrCode.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
-          (decodedText) => {
-            setScanned(decodedText);
-            html5QrCode.stop().then(() => html5QrCode.clear());
-          },
-          (errorMessage) => {
-            console.warn("QR Code scan error:", errorMessage);
-          }
-        );
-      } else {
-        alert("No camera found.");
+    const startScanner = async () => {
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length) {
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            (decodedText) => {
+              setScanned(decodedText);
+              html5QrCode.stop().then(() => html5QrCode.clear());
+            },
+            (errorMessage) => {
+              console.warn("QR Code scan error:", errorMessage);
+            }
+          );
+        } else {
+          alert("No camera found.");
+        }
+      } catch (err) {
+        console.error("Camera access error", err);
+        alert("Failed to access camera: " + err.message);
       }
-    } catch (err) {
-      console.error("Camera access error", err);
-      alert("Failed to access camera: " + err.message);
-    }
-  };
+    };
 
-  startScanner();
+    startScanner();
 
-  return () => {
-    html5QrCode
-      .stop()
-      .then(() => html5QrCode.clear())
-      .catch((err) => console.error("Failed to stop scanner", err));
-  };
-}, []);
-
+    return () => {
+      html5QrCode
+        .stop()
+        .then(() => html5QrCode.clear())
+        .catch((err) => console.error("Failed to stop scanner", err));
+    };
+  }, []);
 
   const downloadQR = () => {
     if (!qrUrl) return;
@@ -87,6 +86,9 @@ useEffect(() => {
     link.download = "qrcode.png";
     link.click();
   };
+  const reset = () => {
+    setScanned("")
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
@@ -162,9 +164,19 @@ useEffect(() => {
           </h2>
           <div id="scanner" className="mx-auto w-full max-w-xs" />
           {scanned && (
-            <div className="text-green-300 bg-green-900 p-2 rounded text-center">
-              ✅ Scanned: {scanned}
-            </div>
+            <>
+              <div className="text-green-300 bg-green-900 p-2 rounded text-center">
+                ✅ Scanned: {scanned}
+              </div>
+              <div>
+                <button
+                  onClick={reset}
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition"
+                >
+                  Reset Cam
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
